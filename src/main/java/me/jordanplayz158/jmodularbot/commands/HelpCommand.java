@@ -1,6 +1,5 @@
 package me.jordanplayz158.jmodularbot.commands;
 
-import me.jordanplayz158.jmodularbot.CommandHandler;
 import me.jordanplayz158.jmodularbot.JModularBot;
 import me.jordanplayz158.utils.MessageUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -8,19 +7,22 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.utils.MarkdownUtil;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.List;
 import java.util.Objects;
 
 public class HelpCommand extends Command {
     public HelpCommand() {
         super("help",
-                null,
+                List.of("h", "hp"),
                 "Help menu that tells you all the commands and their functions!",
                 null,
                 null,
                 "help",
                 false,
                 false);
+
+
     }
 
     @Override
@@ -31,7 +33,7 @@ public class HelpCommand extends Command {
 
         Member executor = Objects.requireNonNull(event.getMember());
 
-        for(Command command : CommandHandler.getCommandsList()) {
+        for(Command command : JModularBot.getInstance().getCommandHandler().getCommandsList()) {
             if((executor.hasPermission(command.getPermission()) || command.getPermission() == null) && (executor.getRoles().contains(command.getRole()) || command.getRole() == null)) {
                 embed.appendDescription(MarkdownUtil.bold(MessageUtils.upperCaseFirstLetter(command.getName())));
                 embed.appendDescription(" - ");
@@ -43,6 +45,6 @@ public class HelpCommand extends Command {
             }
         }
 
-        event.getChannel().sendMessage(embed.build()).queue();
+        event.getChannel().sendMessageEmbeds(embed.build()).queue();
     }
 }

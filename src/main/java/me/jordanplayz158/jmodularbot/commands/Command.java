@@ -8,7 +8,6 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Getter
@@ -22,11 +21,11 @@ public abstract class Command {
     protected final boolean argCheck;
     protected final boolean hierarchyCheck;
 
-    public Command(@NotNull String name, String[] aliases, @NotNull String description, Permission permission, Role role, @NotNull String syntax, boolean argCheck, boolean hierarchyCheck) {
+    public Command(@NotNull String name, List<String> aliases, @NotNull String description, Permission permission, Role role, @NotNull String syntax, boolean argCheck, boolean hierarchyCheck) {
         this.name = name;
 
         if(aliases != null) {
-            this.aliases.addAll(Arrays.asList(aliases));
+            this.aliases.addAll(aliases);
         }
 
         this.description = description;

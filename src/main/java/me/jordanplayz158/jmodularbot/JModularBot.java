@@ -2,7 +2,7 @@ package me.jordanplayz158.jmodularbot;
 
 import lombok.Getter;
 import me.jordanplayz158.jmodularbot.commands.HelpCommand;
-import me.jordanplayz158.jmodularbot.events.CommandsListener;
+import me.jordanplayz158.jmodularbot.events.CommandListener;
 import me.jordanplayz158.jmodularbot.json.Config;
 import me.jordanplayz158.utils.Initiate;
 import me.jordanplayz158.utils.MessageUtils;
@@ -27,12 +27,14 @@ public class JModularBot {
     @Getter
     private static final JModularBot instance = new JModularBot();
     private Config config;
-    private Logger logger;
+    public static Logger logger;
     private JDA jda;
 
     // Files and Folders
     private final File configFile = new File("config.json");
     private final File pluginsFolder = new File("plugins");
+
+    private CommandHandler commandHandler;
 
     public static void main(String[] args) throws LoginException, IOException, InterruptedException {
         File configFile = instance.configFile;
@@ -43,8 +45,7 @@ public class JModularBot {
         config.loadJson();
 
         // Initiates the log
-        instance.logger = Initiate.log(Level.toLevel(instance.config.getLogLevel()));
-        Logger logger = instance.logger;
+        logger = Initiate.log(Level.toLevel(instance.config.getLogLevel()));
 
         logger.debug("""
                 Config File has been copied!
@@ -74,7 +75,7 @@ public class JModularBot {
             logger.debug("Prefix is not empty!");
             jdaBuilder.enableIntents(GatewayIntent.GUILD_MESSAGES);
             logger.debug("Enabling necessary intents for CommandsListener!");
-            jdaBuilder.addEventListeners(new CommandsListener());
+            jdaBuilder.addEventListeners(new CommandListener());
             logger.debug("CommandsListener has been added as an event listener!");
         }
 
@@ -85,8 +86,9 @@ public class JModularBot {
 
         logger.debug("The bot has successfully been initialized and logged in!");
 
-        CommandHandler.addCommands(new HelpCommand());
-
+        instance.commandHandler = new CommandHandler();
+        logger.debug("CommandHandler has been initialized!");
+        instance.commandHandler.addCommands(new HelpCommand());
         logger.debug("Commands have been successfully added to CommandHandler!");
     }
 
@@ -101,6 +103,6 @@ public class JModularBot {
 
     public EmbedBuilder getTemplate(User author) {
         return new EmbedBuilder()
-                .setFooter("Faster | " + MessageUtils.nameAndTag(author));
+                .setFooter("JModularBot | " + MessageUtils.nameAndTag(author));
     }
 }
