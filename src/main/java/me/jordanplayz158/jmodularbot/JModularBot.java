@@ -4,7 +4,6 @@ import lombok.Getter;
 import me.jordanplayz158.jmodularbot.commands.HelpCommand;
 import me.jordanplayz158.jmodularbot.events.CommandsListener;
 import me.jordanplayz158.jmodularbot.json.Config;
-import me.jordanplayz158.utils.FileUtils;
 import me.jordanplayz158.utils.Initiate;
 import me.jordanplayz158.utils.MessageUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -13,13 +12,15 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.utils.ChunkingFilter;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 @Getter
 public class JModularBot {
@@ -34,37 +35,68 @@ public class JModularBot {
     private final File pluginsFolder = new File("plugins");
 
     public static void main(String[] args) throws LoginException, IOException, InterruptedException {
-        //Copy config
-        FileUtils.copyFile(instance.configFile);
-        instance.config = new Config(instance.configFile);
-        instance.config.loadJson();
+        File configFile = instance.configFile;
+
+        instance.copyFile(configFile);
+        instance.config = new Config(configFile);
+        Config config = instance.config;
+        config.loadJson();
 
         // Initiates the log
         instance.logger = Initiate.log(Level.toLevel(instance.config.getLogLevel()));
+        Logger logger = instance.logger;
 
-        instance.pluginsFolder.mkdir();
+        logger.debug("""
+                Config File has been copied!
+                A new instance of Config has been created!
+                Json has been loaded from config.json!
+                Logger has been initialized! (all of the following have worked properly otherwise you wouldn't see this message)
+                """);
 
-        final String token = instance.config.getJson().get("token").getAsString();
-        // Checks if the Token is 1 character or less and if so, tell the person they need to provide a token
-        if(token.length() <= 1) {
-            instance.logger.fatal("You have to provide a token in your config file!");
+        if (instance.pluginsFolder.mkdir()) {
+            logger.debug("\"plugins\" folder has been created!");
+        } else if(instance.pluginsFolder.exists()) {
+            logger.debug("\"plugins\" folder already exists!");
+        } else {
+            logger.debug("\"plugins\" folder was unable to be created and does not exist!");
+        }
+
+        final String token = config.getJson().get("token").getAsString();
+        // Valid discord tokens are 59 characters in length
+        if(token.length() < 59) {
+            logger.fatal("The token you have provided is invalid!");
             System.exit(1);
         }
 
-        // Token and activity is read from and set in the config.json
         JDABuilder jdaBuilder = JDABuilder.createLight(token);
 
-        if(!instance.config.getPrefix().isEmpty()) {
+        if(!config.getPrefix().isEmpty()) {
+            logger.debug("Prefix is not empty!");
             jdaBuilder.enableIntents(GatewayIntent.GUILD_MESSAGES);
+            logger.debug("Enabling necessary intents for CommandsListener!");
             jdaBuilder.addEventListeners(new CommandsListener());
+            logger.debug("CommandsListener has been added as an event listener!");
         }
 
         instance.jda = jdaBuilder
-                .setActivity(Activity.of(instance.config.getActivityType(), instance.config.getActivityName()))
+                .setActivity(Activity.of(config.getActivityType(), config.getActivityName()))
                 .build()
                 .awaitReady();
 
+        logger.debug("The bot has successfully been initialized and logged in!");
+
         CommandHandler.addCommands(new HelpCommand());
+
+        logger.debug("Commands have been successfully added to CommandHandler!");
+    }
+
+    private void copyFile(File name) throws IOException {
+        InputStream fileSrc = Thread.currentThread().getContextClassLoader().getResourceAsStream(name.getPath());
+        if (name.createNewFile()) {
+            assert fileSrc != null;
+
+            Files.copy(fileSrc, name.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     public EmbedBuilder getTemplate(User author) {
