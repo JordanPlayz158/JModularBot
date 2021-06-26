@@ -1,0 +1,10 @@
+{
+  "logLevel": "INFO",
+  "token": "",
+  "prefix": "",
+
+  "activity": {
+    "name": "JModularBot (Java Modular Discord Bot)",
+    "type": "listening"
+  }
+}
