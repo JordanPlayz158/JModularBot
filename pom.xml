@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <mainClass>me.jordanplayz158.jmodularbot.JModularBot</mainClass>
-        <javaVersion>11</javaVersion>
+        <javaVersion>16</javaVersion>
     </properties>
 
     <build>

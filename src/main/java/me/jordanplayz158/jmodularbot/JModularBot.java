@@ -24,7 +24,7 @@ import java.io.IOException;
 @Getter
 public class JModularBot {
     @Getter
-    private static JModularBot instance;
+    private static final JModularBot instance = new JModularBot();
     private Config config;
     private Logger logger;
     private JDA jda;
@@ -33,16 +33,11 @@ public class JModularBot {
     private final File configFile = new File("config.json");
     private final File pluginsFolder = new File("plugins");
 
-    public JModularBot() {
-        instance = this;
-    }
-
     public static void main(String[] args) throws LoginException, IOException, InterruptedException {
-        System.out.println("Is instance variable null? " + (instance == null) + " " + instance);
-
         //Copy config
         FileUtils.copyFile(instance.configFile);
         instance.config = new Config(instance.configFile);
+        instance.config.loadJson();
 
         // Initiates the log
         instance.logger = Initiate.log(Level.toLevel(instance.config.getLogLevel()));
@@ -66,7 +61,6 @@ public class JModularBot {
 
         instance.jda = jdaBuilder
                 .setActivity(Activity.of(instance.config.getActivityType(), instance.config.getActivityName()))
-                .setChunkingFilter(ChunkingFilter.ALL)
                 .build()
                 .awaitReady();
 
