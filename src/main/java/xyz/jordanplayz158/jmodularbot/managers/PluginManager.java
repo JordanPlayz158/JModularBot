@@ -1,16 +1,27 @@
 package xyz.jordanplayz158.jmodularbot.managers;
 
+import xyz.jordanplayz158.jmodularbot.plugin.Plugin;
+
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 public class PluginManager {
-    private static final HashMap<String, Object> plugins = new HashMap<>();
+    private static final Map<String, Plugin> plugins = new HashMap<>();
+
+    /**
+     * @return an immutable map of plugins (plugins are only meant to be modified via the methods in PluginManager)
+     */
+    public static Map<String, Plugin> getPluginMap() {
+        return Collections.unmodifiableMap(plugins);
+    }
 
     /**
      * Gets the plugin instance from the hashmap using the plugins name
      * @param plugin the plugins name
      * @return the plugin instance
      */
-    public static Object getPlugin(String plugin) {
+    public static Plugin getPlugin(String plugin) {
         return plugins.get(plugin);
     }
 
@@ -19,7 +30,7 @@ public class PluginManager {
      * @param pluginName The name of the plugin
      * @param plugin The instance of the plugin
      */
-    public static void addPlugin(String pluginName, Object plugin) {
+    public static void addPlugin(String pluginName, Plugin plugin) {
         plugins.put(pluginName, plugin);
     }
 
@@ -28,7 +39,7 @@ public class PluginManager {
      * @param pluginName The name of the plugin to be unloaded
      */
     public static void unloadPlugin(String pluginName) {
-        Object plugin = getPlugin(pluginName);
+        Plugin plugin = getPlugin(pluginName);
         EventManager.removeAllEvents(plugin);
         CommandManager.removeAllCommands(plugin);
         plugins.remove(pluginName);

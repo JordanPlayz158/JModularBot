@@ -3,15 +3,17 @@ package xyz.jordanplayz158.jmodularbot.managers;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import xyz.jordanplayz158.jmodularbot.plugin.Plugin;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class EventManager {
     private static JDA jda = null;
-    private static final Map<Object, List<ListenerAdapter>> events = new HashMap<>();
+    private static final Map<Plugin, List<ListenerAdapter>> events = new HashMap<>();
 
     /**
      * Passes jda for registering and unregistering events after JDA has been initialized
@@ -22,11 +24,18 @@ public class EventManager {
     }
 
     /**
+     * @return an immutable map of events (events are only meant to be modified via the methods in EventManager)
+     */
+    public static Map<Plugin, List<ListenerAdapter>> getEventsMap() {
+        return Collections.unmodifiableMap(events);
+    }
+
+    /**
      * Adds specific events for a plugin
      * @param plugin the plugin you wish to load events for
      * @param events the events you wish to load
      */
-    public static void addEvents(Object plugin, ListenerAdapter... events) {
+    public static void addEvents(Plugin plugin, ListenerAdapter... events) {
         for(ListenerAdapter event : events) {
             EventManager.events.putIfAbsent(plugin, new ArrayList<>());
             EventManager.events.get(plugin).add(event);
@@ -41,7 +50,7 @@ public class EventManager {
      * @param plugin the plugin you wish to unload the events from
      * @param events the events you wish to unload
      */
-    public static void removeEvents(Object plugin, ListenerAdapter... events) {
+    public static void removeEvents(Plugin plugin, ListenerAdapter... events) {
         for(ListenerAdapter event : events) {
             EventManager.events.get(plugin).remove(event);
             unregisterEvents(jda, event);
@@ -52,7 +61,7 @@ public class EventManager {
      * Removes all events from specified plugin (useful when unloading plugins)
      * @param plugin the plugin you wish to unload all events from
      */
-    public static void removeAllEvents(Object plugin) {
+    public static void removeAllEvents(Plugin plugin) {
         events.get(plugin).forEach(jda::removeEventListener);
         events.remove(plugin);
     }

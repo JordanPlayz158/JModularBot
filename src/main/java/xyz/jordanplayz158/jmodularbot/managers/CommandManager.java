@@ -1,6 +1,7 @@
 package xyz.jordanplayz158.jmodularbot.managers;
 
 import xyz.jordanplayz158.jmodularbot.commands.Command;
+import xyz.jordanplayz158.jmodularbot.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,12 +10,12 @@ import java.util.List;
 import java.util.Map;
 
 public class CommandManager {
-    private static final Map<Object, List<Command>> commands = new HashMap<>();
+    private static final Map<Plugin, List<Command>> commands = new HashMap<>();
 
     /**
      * @return an immutable map of commands (commands are only meant to be modified via the methods in CommandManager)
      */
-    public static Map<Object, List<Command>> getCommandMap() {
+    public static Map<Plugin, List<Command>> getCommandMap() {
         return Collections.unmodifiableMap(commands);
     }
 
@@ -23,7 +24,7 @@ public class CommandManager {
      * @param plugin the plugin you wish to load commands for
      * @param commands the commands you wish to load
      */
-    public static void addCommands(Object plugin, Command... commands) {
+    public static void addCommands(Plugin plugin, Command... commands) {
         for(Command command : commands) {
             CommandManager.commands.putIfAbsent(plugin, new ArrayList<>());
             CommandManager.commands.get(plugin).add(command);
@@ -35,7 +36,7 @@ public class CommandManager {
      * @param plugin the plugin you wish to unload the commands from
      * @param commands the commands you wish to unload
      */
-    public static void removeCommands(Object plugin, Command... commands) {
+    public static void removeCommands(Plugin plugin, Command... commands) {
         for(Command command : commands) {
             CommandManager.commands.get(plugin).remove(command);
         }
@@ -45,7 +46,7 @@ public class CommandManager {
      * Removes all commands from specified plugin (useful when unloading plugins).
      * @param plugin the plugin you wish to unload all commands from
      */
-    public static void removeAllCommands(Object plugin) {
+    public static void removeAllCommands(Plugin plugin) {
         commands.remove(plugin);
     }
 }

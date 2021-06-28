@@ -13,25 +13,25 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Objects;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class PluginLoader {
+public class PluginLoader<C> {
     public Logger logger;
 
     public PluginLoader(Logger logger) {
         this.logger = logger;
     }
 
-    public void LoadClass(File directory) throws ClassNotFoundException {
+    public void LoadClass(File directory, Class<C> parentClass) {
         File pluginsDir = new File(System.getProperty("user.dir") + "/" + directory);
-        String classpath;
 
         if(pluginsDir.listFiles() == null) {
             return;
         }
 
-        for (File jar : pluginsDir.listFiles()) {
+        for (File jar : Objects.requireNonNull(pluginsDir.listFiles())) {
             try {
                 ClassLoader loader = URLClassLoader.newInstance(
                         new URL[] { jar.toURI().toURL() },
@@ -39,19 +39,47 @@ public class PluginLoader {
                 );
 
                 PluginConfig config = getPluginConfig(jar);
-                classpath = config.getMain();
 
-                loadMainClass(classpath, loader, config.getName());
+                loadMainClass(config, loader, parentClass);
 
                 logger.debug("Successfully loaded plugin \"" + config.getName() + "\" v" + config.getVersion() + " by " + authorText(config.getAuthors()));
             } catch (ClassNotFoundException | FileNotFoundException e) {
                 // There might be multiple JARs in the directory so keep looking
-                continue;
+                //continue;
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | IOException e) {
                 logger.debug(e.getMessage(), e);
             }
         }
         //throw new ClassNotFoundException("Class " + classpath + " wasn't found in directory " + pluginsDir);
+    }
+
+    public Plugin LoadClass(String file, Class<C> parentClass) {
+        File pluginFile = getJarPath(file);
+        System.out.println(pluginFile.getAbsolutePath());
+
+        if (!pluginFile.exists()) {
+            return null;
+        }
+
+        try {
+            ClassLoader loader = URLClassLoader.newInstance(
+                    new URL[]{pluginFile.toURI().toURL()},
+                    getClass().getClassLoader()
+            );
+
+            PluginConfig config = getPluginConfig(pluginFile);
+
+            Plugin plugin = loadMainClass(config, loader, parentClass);
+
+            logger.debug("Successfully loaded plugin \"" + config.getName() + "\" v" + config.getVersion() + " by " + authorText(config.getAuthors()));
+
+            return plugin;
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | IOException e) {
+            logger.debug(e.getMessage(), e);
+        }
+        //throw new ClassNotFoundException("Class " + classpath + " wasn't found in directory " + pluginsDir);
+
+        return null;
     }
 
     private PluginConfig getPluginConfig(File jar) throws IOException {
@@ -68,15 +96,25 @@ public class PluginLoader {
         return objectMapper.readValue(ymlIS, PluginConfig.class);
     }
 
-    private void loadMainClass(String classpath, ClassLoader loader, String pluginName) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, ClassNotFoundException {
-        Class<?> clazz = Class.forName(classpath, true, loader);
+    private Plugin loadMainClass(PluginConfig config, ClassLoader loader, Class<C> parentClass) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+        Class<?> clazz = Class.forName(config.getMain(), true, loader);
+        Class<? extends C> newClass = clazz.asSubclass(parentClass);
+
+        String pluginName = config.getName();
+
         // Apparently its bad to use Class.newInstance, so we use
         // newClass.getConstructor() instead
-        Constructor constructor = clazz.getConstructor();
-        PluginManager.addPlugin(pluginName, constructor.newInstance());
+        Constructor constructor = newClass.getConstructor();
+        Plugin plugin = (Plugin) constructor.newInstance();
+
+        newClass.getMethod("init", File.class, PluginConfig.class).invoke(plugin, new File("plugins/" + config.getName()), config);
+
+        PluginManager.addPlugin(pluginName, plugin);
+
+        return plugin;
     }
 
-    private String authorText(String[] authors) {
+    public static String authorText(String[] authors) {
         if(authors.length == 1) {
             return authors[0];
         }
@@ -90,5 +128,31 @@ public class PluginLoader {
         stringBuilder.append(", and ").append(authors[authors.length - 1]).append(".");
 
         return stringBuilder.toString();
+    }
+
+    private File getJarPath(String path) {
+        if (path.contains("plugins")) {
+            path = System.getProperty("user.dir") + "/" + path;
+        } else {
+            path = System.getProperty("user.dir") + "/plugins/" + path;
+        }
+
+        if (!path.contains(".jar")) {
+            StringBuilder stringBuilder = new StringBuilder();
+            String[] pathSplit = path.split("/");
+
+            for (int i = 0; i < pathSplit.length; i++) {
+                if (i == pathSplit.length - 1) {
+                    stringBuilder.append(pathSplit[i]).append(".jar");
+                } else {
+                    stringBuilder.append(pathSplit[i]).append("/");
+                }
+            }
+
+            path = stringBuilder.toString();
+        }
+
+
+        return new File(path);
     }
 }

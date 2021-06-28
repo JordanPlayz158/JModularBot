@@ -2,10 +2,12 @@ package xyz.jordanplayz158.jmodularbot;
 
 import lombok.Getter;
 import xyz.jordanplayz158.jmodularbot.commands.HelpCommand;
+import xyz.jordanplayz158.jmodularbot.commands.PluginCommand;
 import xyz.jordanplayz158.jmodularbot.events.CommandListener;
 import xyz.jordanplayz158.jmodularbot.json.Config;
 import xyz.jordanplayz158.jmodularbot.managers.CommandManager;
 import xyz.jordanplayz158.jmodularbot.managers.EventManager;
+import xyz.jordanplayz158.jmodularbot.plugin.Plugin;
 import xyz.jordanplayz158.jmodularbot.plugin.PluginLoader;
 import me.jordanplayz158.utils.Initiate;
 import me.jordanplayz158.utils.MessageUtils;
@@ -36,9 +38,10 @@ public class JModularBot {
     private final File configFile = new File("config.json");
     private final File pluginsFolder = new File("plugins");
 
+    PluginLoader<Plugin> loader;
     private CommandHandler commandHandler;
 
-    public static void main(String[] args) throws LoginException, IOException, InterruptedException, ClassNotFoundException {
+    public static void main(String[] args) throws LoginException, IOException {
         instance.copyFile(instance.configFile);
         instance.config = new Config(instance.configFile);
         Config config = instance.config;
@@ -79,9 +82,9 @@ public class JModularBot {
             logger.debug("CommandsListener has been added as an event listener!");
         }
 
-        PluginLoader loader = new PluginLoader(logger);
+        instance.loader = new PluginLoader<>(logger);
         logger.debug("PluginLoader successfully instantiated!");
-        loader.LoadClass(instance.pluginsFolder);
+        instance.loader.LoadClass(instance.pluginsFolder, Plugin.class);
         logger.debug("Plugins successfully loaded!");
 
         EventManager.registerEvents(jdaBuilder);
@@ -92,9 +95,13 @@ public class JModularBot {
 
         logger.debug("The bot has successfully been initialized and logged in!");
 
+        new EventManager(instance.jda);
+
+        logger.debug("EventManager has been instantiated and supplied with jda instance!");
+
         instance.commandHandler = new CommandHandler();
         logger.debug("CommandHandler has been initialized!");
-        CommandManager.addCommands(instance, new HelpCommand());
+        CommandManager.addCommands(null, new HelpCommand(), new PluginCommand());
         logger.debug("Commands have been successfully added to CommandManager!");
     }
 
@@ -111,7 +118,7 @@ public class JModularBot {
         }
     }
 
-    public EmbedBuilder getTemplate(User author) {
+    public static EmbedBuilder getTemplate(User author) {
         return new EmbedBuilder()
                 .setFooter("JModularBot | " + MessageUtils.nameAndTag(author));
     }
