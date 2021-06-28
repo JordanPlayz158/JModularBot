@@ -1,9 +1,12 @@
-package me.jordanplayz158.jmodularbot;
+package xyz.jordanplayz158.jmodularbot;
 
 import lombok.Getter;
-import me.jordanplayz158.jmodularbot.commands.HelpCommand;
-import me.jordanplayz158.jmodularbot.events.CommandListener;
-import me.jordanplayz158.jmodularbot.json.Config;
+import xyz.jordanplayz158.jmodularbot.commands.HelpCommand;
+import xyz.jordanplayz158.jmodularbot.events.CommandListener;
+import xyz.jordanplayz158.jmodularbot.json.Config;
+import xyz.jordanplayz158.jmodularbot.managers.CommandManager;
+import xyz.jordanplayz158.jmodularbot.managers.EventManager;
+import xyz.jordanplayz158.jmodularbot.plugin.PluginLoader;
 import me.jordanplayz158.utils.Initiate;
 import me.jordanplayz158.utils.MessageUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -24,8 +27,7 @@ import java.nio.file.StandardCopyOption;
 
 @Getter
 public class JModularBot {
-    @Getter
-    private static final JModularBot instance = new JModularBot();
+    public static final JModularBot instance = new JModularBot();
     private Config config;
     public static Logger logger;
     private JDA jda;
@@ -36,13 +38,11 @@ public class JModularBot {
 
     private CommandHandler commandHandler;
 
-    public static void main(String[] args) throws LoginException, IOException, InterruptedException {
-        File configFile = instance.configFile;
-
-        instance.copyFile(configFile);
-        instance.config = new Config(configFile);
+    public static void main(String[] args) throws LoginException, IOException, InterruptedException, ClassNotFoundException {
+        instance.copyFile(instance.configFile);
+        instance.config = new Config(instance.configFile);
         Config config = instance.config;
-        config.loadJson();
+        config.load();
 
         // Initiates the log
         logger = Initiate.log(Level.toLevel(instance.config.getLogLevel()));
@@ -62,7 +62,7 @@ public class JModularBot {
             logger.debug("\"plugins\" folder was unable to be created and does not exist!");
         }
 
-        final String token = config.getJson().get("token").getAsString();
+        final String token = config.json.get("token").getAsString();
         // Valid discord tokens are 59 characters in length
         if(token.length() < 59) {
             logger.fatal("The token you have provided is invalid!");
@@ -79,19 +79,29 @@ public class JModularBot {
             logger.debug("CommandsListener has been added as an event listener!");
         }
 
+        PluginLoader loader = new PluginLoader(logger);
+        logger.debug("PluginLoader successfully instantiated!");
+        loader.LoadClass(instance.pluginsFolder);
+        logger.debug("Plugins successfully loaded!");
+
+        EventManager.registerEvents(jdaBuilder);
+
         instance.jda = jdaBuilder
                 .setActivity(Activity.of(config.getActivityType(), config.getActivityName()))
-                .build()
-                .awaitReady();
+                .build();
 
         logger.debug("The bot has successfully been initialized and logged in!");
 
         instance.commandHandler = new CommandHandler();
         logger.debug("CommandHandler has been initialized!");
-        instance.commandHandler.addCommands(new HelpCommand());
-        logger.debug("Commands have been successfully added to CommandHandler!");
+        CommandManager.addCommands(instance, new HelpCommand());
+        logger.debug("Commands have been successfully added to CommandManager!");
     }
 
+    /**
+     * Copies the file from the jar to the specified directory
+     * @param name The name of the file inside of the jar
+     */
     private void copyFile(File name) throws IOException {
         InputStream fileSrc = Thread.currentThread().getContextClassLoader().getResourceAsStream(name.getPath());
         if (name.createNewFile()) {

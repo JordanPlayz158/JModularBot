@@ -1,7 +1,7 @@
-package me.jordanplayz158.jmodularbot.commands;
+package xyz.jordanplayz158.jmodularbot.commands;
 
 import lombok.Getter;
-import me.jordanplayz158.jmodularbot.JModularBot;
+import xyz.jordanplayz158.jmodularbot.JModularBot;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -31,7 +31,7 @@ public abstract class Command {
         this.description = description;
         this.permission = permission;
         this.role = role;
-        this.syntax = JModularBot.getInstance().getConfig().getPrefix() + syntax;
+        this.syntax = JModularBot.instance.getConfig().getPrefix() + syntax;
         this.argCheck = argCheck;
         this.hierarchyCheck = hierarchyCheck;
     }

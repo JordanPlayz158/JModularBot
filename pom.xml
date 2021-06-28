@@ -4,16 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>me.jordanplayz158</groupId>
+    <groupId>xyz.jordanplayz158</groupId>
     <artifactId>JModularBot</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
     <packaging>jar</packaging>
     <url>https://jordanplayz158.xyz</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <mainClass>me.jordanplayz158.jmodularbot.JModularBot</mainClass>
+        <mainClass>xyz.jordanplayz158.jmodularbot.JModularBot</mainClass>
         <javaVersion>16</javaVersion>
     </properties>
 
@@ -89,6 +89,18 @@
             <artifactId>gson</artifactId>
             <version>2.8.6</version>
         </dependency>
+        <!-- YML Parsing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.10.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.10.3</version>
+        </dependency>
+        <!-- End YML Parsing -->
         <dependency>
             <groupId>me.jordanplayz158</groupId>
             <artifactId>utils-jda</artifactId>

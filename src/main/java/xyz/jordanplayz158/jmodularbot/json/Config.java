@@ -1,4 +1,4 @@
-package me.jordanplayz158.jmodularbot.json;
+package xyz.jordanplayz158.jmodularbot.json;
 
 import com.google.gson.JsonObject;
 import net.dv8tion.jda.api.entities.Activity;
@@ -6,8 +6,8 @@ import net.dv8tion.jda.api.entities.Activity;
 import java.io.File;
 
 public class Config extends Template {
-    public Config(File jsonFile) {
-        super(jsonFile);
+    public Config(File file) {
+        super(file);
     }
 
     public String getLogLevel() {

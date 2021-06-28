@@ -1,7 +1,8 @@
-package me.jordanplayz158.jmodularbot;
+package xyz.jordanplayz158.jmodularbot;
 
-import me.jordanplayz158.jmodularbot.commands.Command;
-import me.jordanplayz158.jmodularbot.json.Config;
+import xyz.jordanplayz158.jmodularbot.commands.Command;
+import xyz.jordanplayz158.jmodularbot.json.Config;
+import xyz.jordanplayz158.jmodularbot.managers.CommandManager;
 import me.jordanplayz158.utils.MessageUtils;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -11,19 +12,15 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class CommandHandler {
-    private final List<Command> commandsList = new ArrayList<>();
     private final JModularBot instance;
     private final Config config;
 
     public CommandHandler() {
-        instance = JModularBot.getInstance();
+        instance = JModularBot.instance;
         config = instance.getConfig();
     }
 
@@ -94,9 +91,11 @@ public class CommandHandler {
     }
 
     private Command getCommand(String commandName) {
-        for(Command c : commandsList) {
-            if (c.getName().equals(commandName) || c.getAliases().contains(commandName)) {
-                return c;
+        for(List<Command> commandList : CommandManager.getCommandMap().values()) {
+            for(Command c : commandList) {
+                if (c.getName().equals(commandName) || c.getAliases().contains(commandName)) {
+                    return c;
+                }
             }
         }
 
@@ -132,17 +131,5 @@ public class CommandHandler {
         }
 
         return guildRoles.indexOf(memberRoles.get(0)) < guildRoles.indexOf(mentionRoles.get(0));
-    }
-
-    public List<Command> getCommandsList() {
-        return Collections.unmodifiableList(commandsList);
-    }
-
-    public void addCommands(Command... commands) {
-        commandsList.addAll(Arrays.asList(commands));
-    }
-
-    public void removeCommands(Command... commands) {
-        commandsList.removeAll(Arrays.asList(commands));
     }
 }
