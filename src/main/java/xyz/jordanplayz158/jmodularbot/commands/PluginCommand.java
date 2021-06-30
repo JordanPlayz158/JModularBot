@@ -1,9 +1,8 @@
 package xyz.jordanplayz158.jmodularbot.commands;
 
+import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import xyz.jordanplayz158.jmodularbot.JModularBot;
-import xyz.jordanplayz158.jmodularbot.managers.CommandManager;
-import xyz.jordanplayz158.jmodularbot.managers.EventManager;
 import xyz.jordanplayz158.jmodularbot.managers.PluginManager;
 import xyz.jordanplayz158.jmodularbot.plugin.Plugin;
 import xyz.jordanplayz158.jmodularbot.plugin.PluginConfig;
@@ -25,7 +24,9 @@ public class PluginCommand extends Command {
     }
 
     @Override
-    public void onCommand(MessageReceivedEvent event, String[] args) {
+    public boolean onCommand(MessageReceivedEvent event, String[] args) {
+        MessageChannel channel = event.getChannel();
+
         switch (args[0]) {
             case "pluginList", "listPlugins" -> {
                 StringBuilder stringBuilder = new StringBuilder();
@@ -41,7 +42,7 @@ public class PluginCommand extends Command {
                             .append(config.getDescription())
                             .append("\n");
                 }
-                event.getChannel().sendMessageEmbeds(JModularBot.getTemplate(event.getAuthor())
+                channel.sendMessageEmbeds(JModularBot.getTemplate(event.getAuthor())
                         .setColor(Color.YELLOW)
                         .setTitle("Plugin List")
                         .setDescription(stringBuilder.toString())
@@ -50,36 +51,15 @@ public class PluginCommand extends Command {
             }
             case "plugin" -> {
                 if (args.length == 1) {
-                    StringBuilder aliases = new StringBuilder();
-
-                    if (!getAliases().isEmpty()) {
-                        for (String alias : getAliases()) {
-                            aliases.append(JModularBot.instance.getConfig().getPrefix()).append(alias).append(", ");
-                        }
-                    }
-
-                    event.getChannel().sendMessageEmbeds(JModularBot.getTemplate(event.getAuthor()).setColor(Color.YELLOW)
-                            .setTitle(getName())
-                            .addField("Description", getDescription(), false)
-                            .addField("Syntax", getSyntax(), false)
-                            .addField("Aliases", aliases.substring(0, aliases.length() - 2), false)
-                            .build()
-                    ).queue();
-                    return;
+                    return false;
                 }
-                Plugin plugin;
-                PluginConfig config;
+
                 switch (args[1]) {
                     case "load" -> {
-                        JModularBot.logger.debug("PluginManager Map: " + PluginManager.getPluginMap());
-                        JModularBot.logger.debug("CommandManager Map: " + CommandManager.getCommandMap());
-                        JModularBot.logger.debug("EventManager Map: " + EventManager.getEventsMap() + "\n");
-
-                        plugin = JModularBot.instance.getLoader().LoadClass(args[2], Plugin.class);
-                        config = plugin.getPluginConfig();
+                        PluginConfig config = JModularBot.instance.getLoader().LoadClass(args[2]).getPluginConfig();
 
                         if (config != null) {
-                            event.getChannel().sendMessageEmbeds(JModularBot.getTemplate(event.getAuthor())
+                            channel.sendMessageEmbeds(JModularBot.getTemplate(event.getAuthor())
                                     .setColor(Color.GREEN)
                                     .setTitle("Plugin \"" + config.getName() + "\" was loaded successfully!")
                                     .addField("Description", config.getDescription(), false)
@@ -88,41 +68,28 @@ public class PluginCommand extends Command {
                                     .build()
                             ).queue();
                         } else {
-                            event.getChannel().sendMessageEmbeds(JModularBot.getTemplate(event.getAuthor())
+                            channel.sendMessageEmbeds(JModularBot.getTemplate(event.getAuthor())
                                     .setColor(Color.RED)
                                     .setTitle("Plugin wasn't loaded successfully")
                                     .setDescription("Check console for details!")
                                     .build()
                             ).queue();
                         }
-
-                        JModularBot.logger.debug("PluginManager Map: " + PluginManager.getPluginMap());
-                        JModularBot.logger.debug("CommandManager Map: " + CommandManager.getCommandMap());
-                        JModularBot.logger.debug("EventManager Map: " + EventManager.getEventsMap());
                     }
 
                     case "unload" -> {
-                        JModularBot.logger.debug("PluginManager Map: " + PluginManager.getPluginMap());
-                        JModularBot.logger.debug("CommandManager Map: " + CommandManager.getCommandMap());
-                        JModularBot.logger.debug("EventManager Map: " + EventManager.getEventsMap() + "\n");
-
-                        plugin = PluginManager.getPlugin(args[2]);
-                        config = plugin.getPluginConfig();
-
-
+                        Plugin plugin = PluginManager.getPlugin(args[2]);
                         PluginManager.unloadPlugin(args[2]);
-                        event.getChannel().sendMessageEmbeds(JModularBot.getTemplate(event.getAuthor())
+                        channel.sendMessageEmbeds(JModularBot.getTemplate(event.getAuthor())
                                 .setColor(Color.GREEN)
-                                .setTitle("Plugin \"" + config.getName() + "\" was unloaded successfully!")
+                                .setTitle("Plugin \"" + plugin.getPluginConfig().getName() + "\" was unloaded successfully!")
                                 .build()
                         ).queue();
-
-                        JModularBot.logger.debug("PluginManager Map: " + PluginManager.getPluginMap());
-                        JModularBot.logger.debug("CommandManager Map: " + CommandManager.getCommandMap());
-                        JModularBot.logger.debug("EventManager Map: " + EventManager.getEventsMap());
                     }
                 }
             }
         }
+
+        return true;
     }
 }

@@ -1,4 +1,4 @@
-package xyz.jordanplayz158.jmodularbot.json;
+package xyz.jordanplayz158.jmodularbot.storage;
 
 import com.google.gson.JsonObject;
 import lombok.Getter;

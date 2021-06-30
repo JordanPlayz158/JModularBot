@@ -40,6 +40,7 @@ public class PluginManager {
      */
     public static void unloadPlugin(String pluginName) {
         Plugin plugin = getPlugin(pluginName);
+        plugin.onDisable();
         EventManager.removeAllEvents(plugin);
         CommandManager.removeAllCommands(plugin);
         plugins.remove(pluginName);

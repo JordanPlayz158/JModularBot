@@ -2,6 +2,7 @@ package xyz.jordanplayz158.jmodularbot.managers;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import xyz.jordanplayz158.jmodularbot.plugin.Plugin;
 
@@ -13,7 +14,7 @@ import java.util.Map;
 
 public class EventManager {
     private static JDA jda = null;
-    private static final Map<Plugin, List<ListenerAdapter>> events = new HashMap<>();
+    private static final Map<Plugin, List<EventListener>> events = new HashMap<>();
 
     /**
      * Passes jda for registering and unregistering events after JDA has been initialized
@@ -26,7 +27,7 @@ public class EventManager {
     /**
      * @return an immutable map of events (events are only meant to be modified via the methods in EventManager)
      */
-    public static Map<Plugin, List<ListenerAdapter>> getEventsMap() {
+    public static Map<Plugin, List<EventListener>> getEventsMap() {
         return Collections.unmodifiableMap(events);
     }
 
@@ -35,12 +36,12 @@ public class EventManager {
      * @param plugin the plugin you wish to load events for
      * @param events the events you wish to load
      */
-    public static void addEvents(Plugin plugin, ListenerAdapter... events) {
-        for(ListenerAdapter event : events) {
+    public static void addEvents(Plugin plugin, EventListener... events) {
+        for(EventListener event : events) {
             EventManager.events.putIfAbsent(plugin, new ArrayList<>());
             EventManager.events.get(plugin).add(event);
             if(jda != null) {
-                registerEvents(jda, event);
+                registerEvents(event);
             }
         }
     }
@@ -53,7 +54,7 @@ public class EventManager {
     public static void removeEvents(Plugin plugin, ListenerAdapter... events) {
         for(ListenerAdapter event : events) {
             EventManager.events.get(plugin).remove(event);
-            unregisterEvents(jda, event);
+            unregisterEvents(event);
         }
     }
 
@@ -76,19 +77,17 @@ public class EventManager {
 
     /**
      * Registers the event to the current jda instance (for use after jda is initialized)
-     * @param jda the jda instance to register the events to
-     * @param event the event listener to register
+     * @param events the event listeners to register
      */
-    public static void registerEvents(JDA jda, ListenerAdapter event) {
-        jda.addEventListener(event);
+    public static void registerEvents(EventListener... events) {
+        jda.addEventListener(events);
     }
 
     /**
      * Unregisters the event from the current jda instance (for use after jda is initialized)
-     * @param jda the jda instance to register the events to
-     * @param event the event listener to register
+     * @param events the event listeners to register
      */
-    public static void unregisterEvents(JDA jda, ListenerAdapter event) {
-        jda.removeEventListener(event);
+    public static void unregisterEvents(EventListener... events) {
+        jda.removeEventListener(events);
     }
 }

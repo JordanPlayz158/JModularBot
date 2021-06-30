@@ -13,4 +13,8 @@ public abstract class Plugin {
         this.dataFolder = dataFolder;
         this.pluginConfig = pluginConfig;
     }
+
+    public abstract void onEnable();
+
+    public abstract void onDisable();
 }

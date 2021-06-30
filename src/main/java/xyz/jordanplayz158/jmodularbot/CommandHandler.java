@@ -1,7 +1,9 @@
 package xyz.jordanplayz158.jmodularbot;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import xyz.jordanplayz158.jmodularbot.commands.Command;
-import xyz.jordanplayz158.jmodularbot.json.Config;
+import xyz.jordanplayz158.jmodularbot.storage.Config;
 import xyz.jordanplayz158.jmodularbot.managers.CommandManager;
 import me.jordanplayz158.utils.MessageUtils;
 import net.dv8tion.jda.api.entities.Guild;
@@ -16,12 +18,10 @@ import java.util.List;
 import java.util.Objects;
 
 public class CommandHandler {
-    private final JModularBot instance;
     private final Config config;
 
     public CommandHandler() {
-        instance = JModularBot.instance;
-        config = instance.getConfig();
+        config = JModularBot.instance.getConfig();
     }
 
     public void handler(MessageReceivedEvent event) {
@@ -40,7 +40,7 @@ public class CommandHandler {
         User author = event.getAuthor();
 
         if (permissionCheck(command, member) || rolesCheck(command, member)) {
-            channel.sendMessageEmbeds(instance.getTemplate(author)
+            channel.sendMessageEmbeds(JModularBot.getTemplate(author)
                     .setColor(Color.RED)
                     .setTitle("Access Denied")
                     .setDescription("You do not have access to that command!")
@@ -50,19 +50,7 @@ public class CommandHandler {
         }
 
         if (command.isArgCheck() && args.length == 1) {
-            StringBuilder aliases = new StringBuilder();
-
-            if (!command.getAliases().isEmpty()) {
-                for (String alias : command.getAliases()) {
-                    aliases.append(config.getPrefix()).append(alias).append(", ");
-                }
-            }
-
-            channel.sendMessageEmbeds(instance.getTemplate(author).setColor(Color.YELLOW)
-                    .setTitle(command.getName())
-                    .addField("Description", command.getDescription(), false)
-                    .addField("Syntax", command.getSyntax(), false)
-                    .addField("Aliases", aliases.substring(0, aliases.length() - 2), false).build()).queue();
+            channel.sendMessageEmbeds(usageEmbed(command, author)).queue();
             return;
         }
 
@@ -72,7 +60,7 @@ public class CommandHandler {
 
             if (guild.isMember(mentionedUser)) {
                 if (!hierarchyCheck(guild, Objects.requireNonNull(member), Objects.requireNonNull(guild.getMember(mentionedUser)))) {
-                    channel.sendMessageEmbeds(instance.getTemplate(author)
+                    channel.sendMessageEmbeds(JModularBot.getTemplate(author)
                             .setColor(Color.RED)
                             .setTitle("Hierarchy Check")
                             .setDescription("You can't execute this command as you are lower or the same on the hierarchy than the person you are using this on.")
@@ -83,7 +71,9 @@ public class CommandHandler {
             }
         }
 
-        command.onCommand(event, args);
+        if(!command.onCommand(event, args)) {
+            channel.sendMessageEmbeds(usageEmbed(command, author)).queue();
+        }
     }
 
     private String[] getArgs(String message) {
@@ -103,11 +93,35 @@ public class CommandHandler {
     }
 
     private boolean permissionCheck(Command command, Member member) {
-        return command.getPermission() != null && member.hasPermission(command.getPermission());
+        return command.getPermission() != null && !member.hasPermission(command.getPermission());
     }
 
     private boolean rolesCheck(Command command, Member member) {
-        return command.getRole() != null && member.getRoles().contains(command.getRole());
+        return command.getRole() != null && !member.getRoles().contains(command.getRole());
+    }
+
+    private MessageEmbed usageEmbed(Command command, User author) {
+        List<String> commandAliases = command.getAliases();
+        StringBuilder aliases = new StringBuilder();
+
+        if (!commandAliases.isEmpty()) {
+            aliases.append(config.getPrefix()).append(commandAliases.get(0));
+
+            for (int i = 1; i < commandAliases.size(); i++) {
+                aliases.append(", ").append(config.getPrefix()).append(commandAliases.get(i));
+            }
+        }
+
+        EmbedBuilder embed = JModularBot.getTemplate(author).setColor(Color.YELLOW)
+                .setTitle(command.getName())
+                .addField("Description", command.getDescription(), false)
+                .addField("Syntax", command.getSyntax(), false);
+
+        if(aliases.toString().isBlank()) {
+            return embed.build();
+        } else {
+            return embed.addField("Aliases", aliases.toString(), false).build();
+        }
     }
 
     private boolean hierarchyCheck(Guild guild, Member member, Member mention) {
@@ -115,7 +129,7 @@ public class CommandHandler {
         List<Role> memberRoles = member.getRoles();
         List<Role> mentionRoles = mention.getRoles();
 
-        instance.logger.debug("Member's Highest Role: "
+        JModularBot.logger.debug("Member's Highest Role: "
                 + guildRoles.indexOf(memberRoles.get(0))
                 + "\nMention's Highest Role: "
                 + guildRoles.indexOf(mentionRoles.get(0))

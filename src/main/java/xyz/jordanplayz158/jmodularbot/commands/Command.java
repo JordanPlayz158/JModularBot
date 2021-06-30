@@ -36,9 +36,5 @@ public abstract class Command {
         this.hierarchyCheck = hierarchyCheck;
     }
 
-    public abstract void onCommand(MessageReceivedEvent event, String[] args);
-
-    public boolean argsCheck(String[] args, int size) {
-        return args.length < size;
-    }
+    public abstract boolean onCommand(MessageReceivedEvent event, String[] args);
 }
