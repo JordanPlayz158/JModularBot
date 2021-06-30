@@ -94,6 +94,8 @@ public class JModularBot {
             System.out.println();
         }
 
+        instance.loader.loadWaitingOnDependenciesPlugins();
+
         logger.debug("Plugins successfully loaded!");
 
         EventManager.registerEvents(jdaBuilder);

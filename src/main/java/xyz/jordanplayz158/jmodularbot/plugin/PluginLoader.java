@@ -14,11 +14,16 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class PluginLoader {
     private final Logger logger = JModularBot.logger;
+    private final Map<String, List<String>> waitingOnDepends = new HashMap<>();
 
     public Plugin LoadClass(String file) {
         File pluginFile = getJarPath(file);
@@ -34,6 +39,18 @@ public class PluginLoader {
 
             PluginConfig config = getPluginConfig(pluginFile);
 
+            for(String dependency : config.getDepend()) {
+                if (PluginManager.getPlugin(dependency) == null) {
+                    waitingOnDepends.putIfAbsent(file, new ArrayList<>());
+                    waitingOnDepends.get(file).add(dependency);
+                }
+            }
+
+            if(waitingOnDepends.containsKey(file)) {
+                logger.debug("Halted loading of plugin due to all dependencies not loaded yet. Will reload when all dependencies loaded.");
+                return null;
+            }
+
             Plugin plugin = loadMainClass(config, loader);
 
             logger.debug("Successfully loaded plugin \"" + config.getName() + "\" v" + config.getVersion() + " by " + authorText(config.getAuthors()));
@@ -44,6 +61,29 @@ public class PluginLoader {
         }
 
         return null;
+    }
+
+    public void loadWaitingOnDependenciesPlugins() {
+        for(Map.Entry<String, List<String>> plugins : waitingOnDepends.entrySet()) {
+            String pluginName = plugins.getKey();
+
+            if(dependencyLoadedCheck(plugins.getValue())) {
+                waitingOnDepends.remove(pluginName);
+                LoadClass(pluginName);
+            } else {
+                logger.debug("Plugin from \"" + pluginName + "\" could not be loaded due to all dependencies not being found or loaded.");
+            }
+        }
+    }
+
+    public boolean dependencyLoadedCheck(List<String> dependencies) {
+        List<Plugin> plugins = new ArrayList<>();
+
+        for(String string : dependencies) {
+            plugins.add(PluginManager.getPlugin(string));
+        }
+
+        return !plugins.contains(null);
     }
 
     private File getJarPath(String path) {
