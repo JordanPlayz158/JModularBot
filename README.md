@@ -60,6 +60,8 @@ There are 5 required fields
 | authors     | String | Self explanatory
 | main        | String | Path to main class inside jar (ex. `xyz.jordanplayz158.kickplugin.KickPlugin`)
 
-
 ### Examples
 [Plugin Repository](https://github.com/JordanPlayz158/JModularBot-Plugins/)
+
+### Support
+[Discord](https://discord.gg/sdhTpv92Um)
